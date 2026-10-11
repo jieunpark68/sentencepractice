@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentence Sense Tasks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;800&display=swap">
+<style>
+/* Test version: one task per screen, no color clues, no help on test items. */
+:root{
+  --bg:#F3F7FC; --surface:#FFFFFF; --ink:#16263D; --muted:#5A6B82; --line:#C9D7E8;
+  --navy:#1D4E89; --sea:#5EC4F0; --good:#2F8A4A; --goodbg:#E3F4E7; --warn:#B4541F; --warnbg:#FCEBDD;
+  --chip:#FFFFFF; --chipbd:#7D93B0;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --read:"Andika","Comic Sans MS","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--read);font-size:18px;line-height:1.5}
+.wrap{max-width:820px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.eyebrow{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,5.5vw,40px);line-height:1.05;margin:0;color:var(--navy)}
+h2{font-family:var(--display);font-weight:800;font-size:28px;margin:0;color:var(--navy)}
+.tag{font-family:var(--display);font-weight:800;font-size:15px;padding:4px 12px;border-radius:999px;background:var(--navy);color:#fff}
+.tag.practice{background:var(--good)}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:700;font-size:16px}
+.field input{font-family:var(--read);font-size:20px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.field input:focus{outline:3px solid var(--sea);outline-offset:1px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.note{font-size:15px;color:var(--muted);margin:0}
+.script{background:var(--bg);border-left:5px solid var(--navy);padding:12px 16px;border-radius:8px;font-size:19px;margin:0}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.count{font-family:var(--display);font-weight:600;color:var(--muted)}
+.label{font-size:14px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px}
+.lineArea{min-height:84px;border-bottom:4px solid var(--navy);padding:6px 2px 12px;display:flex;flex-wrap:wrap;align-content:flex-end;gap:10px}
+.lineArea.empty::before{content:"Tap the pieces to build your sentence here.";color:var(--muted);font-size:17px;align-self:center}
+.tray{min-height:70px;display:flex;flex-wrap:wrap;gap:10px;padding:12px;border-radius:16px;background:var(--bg);border:2px dashed var(--line)}
+.tray.empty::before{content:"All pieces used.";color:var(--muted);font-size:16px;align-self:center}
+.chunk{font-family:var(--read);font-size:clamp(19px,4.2vw,23px);font-weight:700;color:var(--ink);min-height:52px;padding:8px 16px;border:3px solid var(--chipbd);background:var(--chip);border-radius:12px;cursor:pointer;line-height:1.2}
+.chunk.hint{box-shadow:0 0 0 4px var(--sea)}
+.chunk.wrong{animation:shake .4s ease}
+@keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+.feedback{font-size:18px;font-weight:700;border-radius:12px;padding:10px 14px;margin:0}
+.feedback:empty{display:none}
+.feedback.good{background:var(--goodbg);color:var(--good)}
+.feedback.try{background:var(--warnbg);color:var(--warn)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font-family:var(--display);font-weight:800;font-size:19px;min-height:52px;padding:6px 22px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.go{background:var(--good);border-color:var(--good);color:#fff}
+.btn.small{font-size:14px;min-height:36px;padding:4px 12px;font-weight:600}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.chunk:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.spacer{flex:1}
+.examiner{border-top:1px dashed var(--line);padding-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:16px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+th{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+.big{font-size:40px;color:#B98309;letter-spacing:4px;text-align:center}
+.center{text-align:center}
+@media (prefers-reduced-motion:reduce){.chunk.wrong{animation:none}}
+</style>
+<style>
+.sentenceQ{font-size:clamp(24px,5vw,32px);font-weight:700;line-height:1.6;margin:8px 0}
+.blank{display:inline-block;min-width:3.6em;text-align:center;border-bottom:4px solid var(--navy);padding:0 8px;color:var(--navy)}
+.blank.empty{color:transparent}
+.choices{display:flex;flex-wrap:wrap;gap:14px}
+.choice{font-family:var(--read);font-size:clamp(24px,5vw,30px);font-weight:700;min-width:120px;min-height:64px;padding:8px 22px;border:3px solid var(--chipbd);background:var(--chip);color:var(--ink);border-radius:14px;cursor:pointer}
+.choice[aria-pressed="true"]{border-color:var(--navy);background:var(--navy);color:#fff}
+.choice.hint{box-shadow:0 0 0 4px var(--sea)}
+.choice:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.choicesNext{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.bigchoice{min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:22px}
+.bigchoice small{font-family:var(--read);font-weight:400;font-size:15px;opacity:.9}
+.pieceWrap{display:inline-flex;align-items:stretch}
+.pieceWrap .chunk,.pieceWrap .choice{border-top-right-radius:0;border-bottom-right-radius:0;border-right-width:0}
+.spk{font-size:18px;min-width:44px;padding:0 8px;border:3px solid var(--chipbd);border-left:2px dashed var(--line);background:var(--bg);border-radius:0 12px 12px 0;cursor:pointer}
+.spk:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.qpic{margin:0;display:flex;justify-content:center}
+.qpic img{display:block;width:auto;height:auto;max-width:100%;max-height:min(42vh,380px);border-radius:16px;border:2px solid var(--line);background:var(--bg)}
+.qrow{display:flex;align-items:flex-start;gap:12px}
+.dirRow{display:flex;align-items:center;gap:12px}
+.dirRow .script{flex:1;min-width:0}
+.dirLine{margin:0;font-size:19px;font-weight:700;color:var(--navy)}
+.spkBig{font-size:28px;min-width:64px;min-height:64px;border-radius:16px;border:3px solid var(--navy);flex:none}
+.sentenceQ .w{cursor:pointer;border-radius:6px}
+.sentenceQ .w:active,.sentenceQ .w:focus-visible{background:var(--sea);outline:none}
+.dob{display:flex;align-items:center;gap:8px}
+.dob input{font-family:var(--read);font-size:22px;width:3.4em;text-align:center;padding:10px 6px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.dob input.yr{width:4.6em}
+.dob input:focus{outline:3px solid var(--sea);outline-offset:1px}
+.dob span{font-size:22px;color:var(--muted)}
+#dobMsg{color:var(--warn);font-weight:700}
+.checks{display:flex;flex-wrap:wrap;gap:10px 20px}
+.checks label{display:flex;align-items:center;gap:8px;font-size:17px;cursor:pointer}
+.checks input{width:22px;height:22px;accent-color:var(--navy)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><span class="eyebrow">Sentence Sense</span><h1 id="title">Sentence Tasks</h1></div>
+    <span class="tag" id="modeTag" hidden></span>
+  </header>
+  <main id="screen"></main>
+</div>
+
+<script>
+/* ================= PART 1: SENTENCE BUILDER =================
+   Each item: pieces in correct order and a FIXED scrambled order,
+   so every student sees the same starting arrangement. */
+const SB_PRACTICE=[
+  {pieces:["The cub","slept."],order:[1,0]},
+  {pieces:["Nora","found","a clue."],order:[2,0,1]}
+];
+const SB_LEVELS=["Simple Sentences","Where and When","Telling More (who, that, because, when)"];
+const SB_TEST=[
+  {lv:1,pieces:["The bear","ran."],order:[1,0]},
+  {lv:1,pieces:["Nora","did not see","the bear."],order:[2,0,1]},
+  {lv:1,pieces:["The cub","wanted","to eat berries."],order:[2,0,1]},
+  {lv:1,pieces:["The hungry bear","ate","the berries."],order:[2,0,1]},
+  {lv:1,pieces:["Lily","found","big","paw prints."],order:[1,3,0,2]},
+  {lv:2,pieces:["Nora","looked","over the fence."],order:[1,2,0]},
+  {lv:2,pieces:["Lily","found paw prints","in the sandbox."],order:[2,0,1]},
+  {lv:2,pieces:["The bear cub","splashed","in the pool","early in the morning."],order:[1,3,0,2]},
+  {lv:2,pieces:["The gate","was not","locked","last night."],order:[2,3,0,1]},
+  {lv:2,pieces:["Officer Ross","came","to take the cub","back to the forest."],order:[3,1,0,2]},
+  {lv:3,pieces:["The gate","that was broken","had scratch marks."],order:[1,2,0]},
+  {lv:3,pieces:["Nora","found the bird feeder,","which was bent."],order:[2,0,1]},
+  {lv:3,pieces:["Officer Ross,","who is a wildlife officer,","caught the cub."],order:[2,0,1]},
+  {lv:3,pieces:["The girls","followed the paw prints","that led into the forest."],order:[1,2,0]},
+  {lv:3,pieces:["The hungry cub","that ate the berries","did not want","to leave the backyard."],order:[3,2,0,1]},
+  {lv:3,pieces:["Nora","called Mom,","who was at the store."],order:[2,1,0]},
+  {lv:3,pieces:["Officer Kim","found the cub","that was hiding","in the tree."],order:[3,2,0,1]},
+  {lv:3,pieces:["The bear","that Lily saw","was very big."],order:[2,1,0]},
+  {lv:3,pieces:["Lily,","who loves animals,","wanted to help the cub."],order:[2,1,0]},
+  {lv:3,pieces:["The berries","that the cub ate","were not ripe."],order:[2,0,1]}
+];
+
+/* ================= PART 2: PRONOUN DETECTIVE =================
+   Choices are shown in the fixed order listed. */
+const PD_PRACTICE=[
+  {q:"The cub saw the cool water in the pool, so ___ jumped in and splashed.",choices:["They","It","He","We"],answer:"It",img:"pp1.jpg"},
+  {q:"Officer Ross saw the bear cub run down the street, so ___ ran after it.",choices:["She","They","He","It"],answer:"He",img:"pp2.jpg"}
+];
+const PD_TEST=[
+  {q:"Dad told Lily to bring water on the hike, so ___ put a bottle in her backpack before walking into the forest.",choices:["He","She","They","It"],answer:"She",img:"pt01.jpg"},
+  {q:"When Grandpa and Lily walked down the trail, ___ found some black fur and picked it up with his hand.",choices:["She","We","They","He"],answer:"He",img:"pt02.jpg"},
+  {q:"Dad hung the new bird feeder on a tall pole, but now ___ is bent because the hungry bear pulled on it.",choices:["He","They","It","She"],answer:"It",img:"pt03.jpg"},
+  {q:"Sam and Max lost the game at recess, and ___ were too mad to talk to anyone.",choices:["They","He","We","It"],answer:"They",img:"pt04.jpg"},
+  {q:"Nora and I heard a loud noise in the yard, so ___ ran over and looked over the fence.",choices:["They","You","She","We"],answer:"We",img:"pt05.jpg"},
+  {q:"\u201CMy phone is missing!\u201D said Nora. \u201C___ looked under the couch, but it is not there.\u201D",choices:["I","She","We","You"],answer:"I",img:"pt06.jpg"},
+  {q:"Nora watched Lily eat cookies at the table. \u201C___ eat so fast, and I am still eating!\u201D she said.",choices:["I","You","We","She"],answer:"You",img:"pt07.jpg"},
+  {lv:2,q:"Lily held up her new badge. \u201COfficer Kim gave this badge to ___ because I helped find the cub!\u201D she said.",choices:["him","her","me","us"],answer:"me",img:"pt08.jpg"},
+  {lv:2,q:"Nora built a fort in her backyard with a big box and a blanket. \u201CThis is ___ fort, so please knock first!\u201D she said.",choices:["my","your","her","our"],answer:"my",img:"pt09.jpg"},
+  {lv:2,q:"The wind blew the trash bags all over the yard, so Dad walked outside and picked ___ up.",choices:["it","him","them","us"],answer:"them",img:"pt10.jpg"}
+];
+const PD_LEVELS=["Subject pronouns","Object and possessive pronouns"];
+
+/* Capital letter only when the blank starts a sentence or a quote; "I" always stays capital. */
+function fixCase(arr){arr.forEach(it=>{
+  const before=it.q.split("___")[0];
+  const atStart=/^\s*$|[.!?]\s*$|[\u201C"]\s*$/.test(before);
+  const f=w=>w==="I"?w:(atStart?w[0].toUpperCase()+w.slice(1):w.toLowerCase());
+  it.choices=it.choices.map(f);it.answer=f(it.answer);
+})}
+fixCase(PD_PRACTICE);fixCase(PD_TEST);
+const TASKS={
+  sb:{title:"Sentence Builder",csvName:"Sentence Builder"},
+  pd:{title:"Pronoun Detective",csvName:"Pronoun Detective"}
+};
+
+/* ================= STATE ================= */
+let session=null, plan=[], step=0;   // plan: list of task keys to run
+let task="sb", phase="setup", i=0;    // phase: practice | test
+let line=[], tray=[], pick=null, t0=0, taps=0, listens=0, solved=false;
+const scr=document.getElementById("screen"), tag=document.getElementById("modeTag"), titleEl=document.getElementById("title");
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const first=()=>esc(session.first||session.name.split(" ")[0]);
+/* Older saved sessions only have "name"; split it so their CSV rows still fill both columns. */
+const nameParts=s=>s.first!==undefined?[s.first,s.last]:[(s.name||"").split(" ")[0],(s.name||"").split(" ").slice(1).join(" ")];
+function on(id,f){const e=document.getElementById(id);if(e)e.onclick=f}
+
+/* Backup of finished sessions on this device */
+const KEY="ss-test-sessions";
+function backups(){try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){return[]}}
+/* Returns true only if the session can be read back from storage. */
+function storeBackup(s){try{const b=backups().filter(x=>x.id!==s.id);b.push(s);localStorage.setItem(KEY,JSON.stringify(b));return backups().some(x=>x.id===s.id)}catch(e){return false}}
+function clearBackups(){try{localStorage.removeItem(KEY)}catch(e){}}
+
+function getDevice(){try{return localStorage.getItem("ss-device")||""}catch(e){return""}}
+function setDevice(v){try{localStorage.setItem("ss-device",v)}catch(e){}}
+function savedDates(list){const d=[...new Set(list.map(s=>s.date))].sort();return d.length===1?d[0]:d[0]+" to "+d[d.length-1]}
+function saveAll(){
+  const dev=getDevice().replace(/[^A-Za-z0-9]+/g,""), n=backups().length;
+  saveWithStatus(toCSV(backups()),`SentenceSense_${dev?"iPad"+dev+"_":""}${localDate()}.csv`,`all ${n} student${n===1?"":"s"}`,"eodMsg")
+    .then(r=>{if(r==="shared"||r==="downloaded"){const a=document.getElementById("afterSave"),c=document.getElementById("clrMsg");if(a)a.hidden=false;if(c)c.hidden=false}});
+}
+/* ---------- End of the day: its own page, for the examiner only ---------- */
+function showEndOfDay(){
+  phase="eod";tag.hidden=false;tag.textContent="Examiner";tag.className="tag";titleEl.textContent="End of the Day";
+  const saved=backups();
+  scr.innerHTML=`<section class="card">
+    <h2>Save today's results</h2>
+    <p class="note"><strong>${saved.length}</strong> student${saved.length===1?"":"s"} saved on this iPad${saved.length?` (${esc(savedDates(saved))})`:""}${getDevice()?` · iPad ${esc(getDevice())}`:""}.</p>
+    ${saved.length?`<div class="tablewrap"><table><thead><tr><th>Student</th><th>Date</th></tr></thead><tbody>${saved.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.date)}</td></tr>`).join("")}</tbody></table></div>`:""}
+    <ol class="note" style="margin:0;padding-left:20px;font-size:16px">
+      <li>Tap <strong>Save all results</strong>, then choose OneDrive (or Save to Files).</li>
+      <li>Check that the file is in OneDrive.</li>
+      <li>Come back and tap <strong>Clear saved sessions</strong> so tomorrow starts fresh.</li>
+    </ol>
+    <div class="actions"><button class="btn primary" id="dlAll" ${saved.length?"":"disabled"}>Save all results (CSV)</button></div>
+    <p class="feedback" id="eodMsg"></p>
+    <div class="actions" id="afterSave" hidden><button class="btn" id="clr">Clear saved sessions</button></div>
+    <p class="note" id="clrMsg" hidden>Only clear after the file is in OneDrive. Clearing cannot be undone.</p>
+  </section>
+  <div class="actions" style="margin-top:14px"><button class="btn" id="back">← Back to start</button></div>`;
+  on("dlAll",saveAll);
+  let armed=false;
+  on("clr",()=>{if(!armed){armed=true;$("#clrMsg").textContent="Tap Clear again to delete all saved sessions from this iPad.";$("#clr").textContent="Yes, clear them";return}clearBackups();setup()});
+  on("back",setup);
+}
+/* Runs a save and reports the outcome in the given message line. */
+async function saveWithStatus(text,name,what,msgId="saveMsg"){
+  const el=document.getElementById(msgId), say=(m,c)=>{if(el){el.textContent=m;el.className="feedback "+c}};
+  say("Saving…","try");
+  const r=await download(text,name);
+  if(r==="shared")say(`✓ File for ${what} sent. Check that it shows up in OneDrive or Files.`,"good");
+  else if(r==="downloaded")say(`✓ File for ${what} downloaded (${name}). Check your Downloads folder.`,"good");
+  else if(r==="cancelled")say(`✗ Not saved. The share menu was closed. Tap the button again and pick OneDrive or Save to Files.`,"try");
+  else say(`✗ The file could not be saved. Try again.`,"try");
+  return r;
+}
+function localDate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+
+/* ================= SETUP ================= */
+function setup(){
+  phase="setup";tag.hidden=true;titleEl.textContent="Sentence Tasks";
+  const today=localDate(), saved=backups();
+  scr.innerHTML=`<section class="card">
+    <h2>Student information</h2>
+    <div class="row">
+      <div class="field"><label for="fname">First name</label><input id="fname" autocomplete="off" autocapitalize="words"></div>
+      <div class="field"><label for="lname">Last name</label><input id="lname" autocomplete="off" autocapitalize="words"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="dobM">Date of birth</label>
+        <div class="dob">
+          <input id="dobM" inputmode="numeric" maxlength="2" placeholder="MM" aria-label="Birth month" autocomplete="off">
+          <span>/</span>
+          <input id="dobD" inputmode="numeric" maxlength="2" placeholder="DD" aria-label="Birth day" autocomplete="off">
+          <span>/</span>
+          <input id="dobY" class="yr" inputmode="numeric" maxlength="4" placeholder="YYYY" aria-label="Birth year" autocomplete="off">
+        </div>
+        <span class="note" id="dobMsg"></span>
+      </div>
+    </div>
+    <div class="field"><label>Tasks to give</label>
+      <div class="checks">
+        <label for="doSB"><input type="checkbox" id="doSB" checked> Part 1: Sentence Builder (20)</label>
+        <label for="doPD"><input type="checkbox" id="doPD" checked> Part 2: Pronoun Detective (10)</label>
+      </div>
+    </div>
+    <p class="note">Each part starts with 2 practice items. Sentence Builder has 20 test items and Pronoun Detective has 10.</p>
+    <div class="actions"><button class="btn primary" id="begin" disabled>Start</button></div>
+    <div class="examiner">
+      <label for="device">iPad number</label>
+      <input id="device" autocomplete="off" maxlength="10" value="${esc(getDevice())}" placeholder="e.g. 7" style="width:5em;font-size:16px;padding:6px 8px;border:2px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">
+      <span class="spacer"></span>
+      <span>${saved.length} student${saved.length===1?"":"s"} saved on this iPad</span>
+      <button class="btn small" id="eodBtn">End of the day</button>
+    </div>
+    <div class="examiner">
+      <span>Voice: <strong id="voiceName">${esc(voiceLabel())}</strong></span>
+      <button class="btn small" id="testVoice">🔊 Test voice</button>
+    </div>
+  </section>`;
+  const fn=$("#fname"),ln=$("#lname"),go=$("#begin"),c1=$("#doSB"),c2=$("#doPD");
+  const dM=$("#dobM"),dD=$("#dobD"),dY=$("#dobY"),dMsg=$("#dobMsg");
+  /* Typed date of birth: returns "YYYY-MM-DD" when valid, "" otherwise, and shows why. */
+  const readDob=()=>{
+    const m=dM.value,d=dD.value,y=dY.value;
+    if(!m||!d||y.length<4){dMsg.textContent="";return""}
+    const mm=+m,dd=+d,yy=+y,dt=new Date(yy,mm-1,dd);
+    if(!(mm>=1&&mm<=12)||dt.getMonth()!==mm-1||dt.getDate()!==dd){dMsg.textContent="That date doesn't exist. Check the month and day.";return""}
+    const age=(Date.now()-dt)/31557600000;
+    if(age<3||age>14){dMsg.textContent="Check the year. This student would be "+Math.max(0,Math.floor(age))+" years old.";return""}
+    dMsg.textContent="";return `${yy}-${String(mm).padStart(2,"0")}-${String(dd).padStart(2,"0")}`;
+  };
+  const ok=()=>go.disabled=!(fn.value.trim()&&ln.value.trim()&&readDob()&&(c1.checked||c2.checked));
+  [fn,ln].forEach(e=>{e.oninput=ok});c1.onchange=ok;c2.onchange=ok;
+  /* digits only, jump to the next box when full */
+  [[dM,dD],[dD,dY],[dY,null]].forEach(([el,nx])=>{el.oninput=()=>{el.value=el.value.replace(/\D/g,"");if(nx&&el.value.length===el.maxLength)nx.focus();ok()}});
+  go.onclick=()=>{
+    plan=[];if(c1.checked)plan.push("sb");if(c2.checked)plan.push("pd");
+    const f=fn.value.trim(),l=ln.value.trim();
+    session={id:Date.now().toString(36),first:f,last:l,name:f+" "+l,dob:readDob(),date:today,device:getDevice(),voice:voiceLabel(),
+      start:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),results:[],status:{}};
+    step=0;beginTask();
+  };
+  const dev=$("#device");dev.oninput=()=>setDevice(dev.value.trim());
+  on("eodBtn",showEndOfDay);
+  on("testVoice",()=>speak("Hi! These pieces are parts of a sentence. Lily found paw prints in the sandbox."));
+  fn.focus();
+}
+
+/* Directions box: the GA can read it aloud, or tap the speaker to play it. */
+function dirHTML(text){
+  return `<p class="note">Read to the student, or tap the speaker to play it:</p>
+    <div class="dirRow"><button class="spk spkBig" id="readScript" aria-label="Hear the directions">🔊</button><p class="script" id="scriptText">${text}</p></div>`;
+}
+function wireScript(){on("readScript",()=>speak($("#scriptText").textContent))}
+/* ================= FLOW ================= */
+function beginTask(){
+  [...PD_PRACTICE,...PD_TEST].forEach(it=>{if(it.img){const im=new Image();im.src=it.img}});
+  if(step>=plan.length){finish();return}
+  task=plan[step];phase="practice";i=0;
+  titleEl.textContent=TASKS[task].title;tag.hidden=false;tag.textContent="Practice";tag.className="tag practice";
+  const script=task==="sb"
+    ?`Hi, ${first()}! These pieces are parts of a sentence, but they are all mixed up. Tap the pieces to put them in the right order. Start with who or what the sentence is about. If you want to hear a piece, tap the speaker next to it. When you are done, tap Check.`
+    :`Now we are going to be pronoun detectives! Each sentence has a missing word. Read the sentence and tap the word that fits in the blank. You can tap the big speaker to hear the sentence, or tap any word to hear it. When you are done, tap Check.`;
+  scr.innerHTML=`<section class="card">
+    <h2>${step===0?"Let's practice!":"Part 2: Let's practice!"}</h2>
+    ${dirHTML(script)}
+    <div class="actions"><button class="btn go" id="go">Start practice</button></div></section>`;
+  on("go",loadItem);wireScript();
+}
+function testIntro(){
+  phase="test";i=0;tag.textContent="Test";tag.className="tag";
+  scr.innerHTML=`<section class="card">
+    <h2>Great practicing!</h2>
+    ${dirHTML(`Now it's your turn to do it all by yourself. I can't help you this time. ${task==="sb"?"Put the pieces in order, then tap Done.":"Tap the word that fits, then tap Done."} You can still tap the speakers to hear the words. Some will be easy and some will be tricky. Just do your best!`)}
+    <div class="actions"><button class="btn primary" id="go">Start test</button></div></section>`;
+  on("go",loadItem);wireScript();
+}
+function endTask(how){
+  session.status[task]=how;step++;
+  if(step<plan.length){
+    tag.hidden=true;
+    scr.innerHTML=`<section class="card"><h2>Great job! Time for a short break.</h2>
+      ${dirHTML("You finished the first part! Next, we are going to be pronoun detectives.")}
+      <div class="actions"><button class="btn primary" id="go">Go to Part 2</button></div></section>`;
+    on("go",beginTask);wireScript();
+  }else finish();
+}
+const items=()=>task==="sb"?(phase==="practice"?SB_PRACTICE:SB_TEST):(phase==="practice"?PD_PRACTICE:PD_TEST);
+function loadItem(){
+  const it=items()[i];line=[];tray=task==="sb"?it.order.slice():[];pick=null;taps=0;listens=0;solved=false;t0=performance.now();
+  render();
+}
+function nextItem(){if(i<items().length-1){i++;loadItem()}else if(phase==="practice")testIntro();else endTask("completed")}
+
+/* ================= RENDER ================= */
+function render(fb,fbc){
+  const P=phase==="practice", it=items()[i], total=items().length;
+  const ready=task==="sb"?tray.length===0:pick!==null;
+  const body=task==="sb"
+    ?`<div><p class="label">My sentence</p><div class="lineArea ${line.length?"":"empty"}" id="lineArea"></div></div>
+      <div><p class="label">Pieces</p><div class="tray ${tray.length?"":"empty"}" id="tray"></div></div>`
+    :`${it.img?`<figure class="qpic"><img src="${it.img}" alt="" onerror="this.parentNode.hidden=true"></figure>`:""}
+      <div class="qrow"><button class="spk spkBig" id="readQ" aria-label="Read the sentence">🔊</button><p class="sentenceQ">${fillBlank(it.q)}</p></div>
+      <p class="note">Tap any word to hear it.</p>
+      <div class="choices" id="choices">${it.choices.map((c,k)=>`<span class="pieceWrap"><button class="choice" id="ch${k}" aria-pressed="${pick===k}">${esc(c)}</button><button class="spk" id="sp${k}" aria-label="Hear ${esc(c)}">🔊</button></span>`).join("")}</div>`;
+  scr.innerHTML=`<section class="card">
+    <div class="meta"><span class="count">${P?"Practice":(task==="sb"?"Sentence":"Question")} ${i+1} of ${total}</span></div>
+    <div class="dirRow"><button class="spk spkBig" id="readDir" aria-label="Hear the directions">🔊</button><p class="dirLine">${task==="sb"?"Put the pieces in order to make a sentence. Then tap "+(P?"Check":"Done")+".":"Tap the word that fits in the blank. Then tap "+(P?"Check":"Done")+"."}</p></div>
+    ${body}
+    <p class="feedback ${fbc||""}" id="fb">${fb||""}</p>
+    <div class="actions">
+      ${P&&solved?`<button class="btn go" id="next">${i<total-1?"Next practice →":"Continue →"}</button>`
+       :`<button class="btn primary" id="done" ${ready?"":"disabled"}>${P?"Check":"Done"}</button>
+         ${task==="sb"?`<button class="btn" id="clear" ${line.length?"":"disabled"}>Start over</button>`:""}
+         ${P?`<button class="btn" id="hear">🔊 Hear it</button><span class="spacer"></span><button class="btn" id="hint">Hint</button>`:""}`}
+    </div>
+    ${P?"":`<div class="examiner"><span>Examiner only:</span><button class="btn small" id="stop">End this part early</button><span id="stopMsg"></span></div>`}
+  </section>`;
+  if(task==="sb"){
+    const L=$("#lineArea"),T=$("#tray");
+    line.forEach((k,pos)=>L.appendChild(chip(it.pieces[k],"line"+pos,()=>{if(solved)return;taps++;line.splice(pos,1);tray.push(k);render()})));
+    tray.forEach((k,pos)=>T.appendChild(chip(it.pieces[k],"tray"+pos,()=>{taps++;tray.splice(pos,1);line.push(k);render()})));
+    on("clear",()=>{taps++;tray=tray.concat(line);line=[];render()});
+  }else{
+    it.choices.forEach((c,k)=>{on("ch"+k,()=>{if(solved)return;taps++;pick=k;render()});on("sp"+k,()=>say(c))});
+    on("readQ",()=>say(it.q.replace("___","blank")));
+    scr.querySelectorAll(".w").forEach(w=>{w.onclick=()=>say(w.dataset.say);w.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();say(w.dataset.say)}}});
+  }
+  on("done",P?checkPractice:submit);
+  on("hear",()=>say(task==="sb"?line.map(k=>it.pieces[k]).join(" "):readQ(it)));
+  on("hint",hint);
+  on("next",nextItem);
+  on("readDir",()=>speak($(".dirLine").textContent));
+  let armed=false;
+  on("stop",()=>{if(!armed){armed=true;$("#stopMsg").textContent="Press again to end this part and save.";return}endTask(`stopped at item ${i+1}`)});
+}
+/* Each word in the sentence is its own tap target that reads that word aloud. */
+function wordsHTML(text){
+  return text.split(/(\s+)/).map(t=>{
+    if(!t.trim())return t;
+    const clean=t.replace(/[^A-Za-z'’]/g,"");
+    return clean?`<span class="w" role="button" tabindex="0" data-say="${esc(clean)}">${esc(t)}</span>`:esc(t);
+  }).join("");
+}
+function fillBlank(q){const parts=q.split("___");const it=items()[i];const w=pick===null?"":it.choices[pick];
+  return wordsHTML(parts[0])+`<span class="blank w ${pick===null?"empty":""}" role="button" tabindex="0" data-say="${pick===null?"blank":esc(w)}">${pick===null?"____":esc(w)}</span>`+wordsHTML(parts[1]||"")}
+function readQ(it){return it.q.replace("___",pick===null?"blank":it.choices[pick])}
+/* A piece = tap to move + its own speaker button to hear it. */
+function chip(text,id,fn){
+  const wrap=document.createElement("span");wrap.className="pieceWrap";
+  const b=document.createElement("button");b.className="chunk";b.id=id;b.textContent=text;b.onclick=fn;
+  const s=document.createElement("button");s.className="spk";s.setAttribute("aria-label","Hear "+text);s.textContent="🔊";s.onclick=()=>say(text);
+  wrap.append(b,s);return wrap;
+}
+/* Read aloud and count it, so the CSV shows how often each student listened. */
+function say(t){listens++;speak(t)}
+function rightSoFar(){let ok=0;while(ok<line.length&&line[ok]===ok)ok++;return ok}
+
+/* ================= PRACTICE ================= */
+function checkPractice(){
+  const it=items()[i];
+  if(task==="sb"){
+    const ok=rightSoFar();
+    if(ok===it.pieces.length){solved=true;render("You did it! Read it out loud with me.","good");speak(it.pieces.join(" "))}
+    else{render(ok===0?"Not yet! Which piece tells who or what? Start with that one.":"Almost! Read it out loud. Does it sound right? Try again.","try");
+      const bad=document.getElementById("line"+ok);if(bad)bad.classList.add("wrong")}
+  }else{
+    if(it.choices[pick]===it.answer){solved=true;render("You got it! Read the whole sentence with me.","good");speak(readQ(it))}
+    else render("Not quite. Who or what is the sentence about? Try a different word.","try");
+  }
+}
+function hint(){
+  const it=items()[i];
+  if(task==="sb"){
+    const ok=rightSoFar();tray=tray.concat(line.slice(ok));line=line.slice(0,ok);
+    render("Look for the glowing piece. It goes next!","try");
+    const el=document.getElementById("tray"+tray.indexOf(ok));if(el)el.classList.add("hint");
+  }else{
+    pick=null;render("Look for the glowing word. Read the sentence with it.","try");
+    const el=document.getElementById("ch"+it.choices.indexOf(it.answer));if(el)el.classList.add("hint");
+  }
+}
+
+/* ================= SCORED ITEMS ================= */
+function submit(){
+  const it=items()[i], time=((performance.now()-t0)/1000).toFixed(1);
+  if(task==="sb"){
+    session.results.push({task:"sb",item:i+1,level:it.lv,levelName:SB_LEVELS[it.lv-1],prompt:"",
+      target:it.pieces.join(" "),response:line.map(k=>it.pieces[k]).join(" "),
+      responseOrder:line.map(k=>k+1).join("-"),correct:line.every((k,pos)=>k===pos)?1:0,timeSec:time,taps,listens});
+  }else{
+    const resp=it.choices[pick];
+    session.results.push({task:"pd",item:i+1,level:it.lv||1,levelName:PD_LEVELS[(it.lv||1)-1],prompt:it.q,
+      target:it.answer,response:resp,responseOrder:String(pick+1),correct:resp===it.answer?1:0,timeSec:time,taps,listens});
+  }
+  nextItem();
+}
+
+/* ================= FINISH ================= */
+function finish(){
+  phase="done";tag.hidden=true;titleEl.textContent="Sentence Tasks";const kept=storeBackup(session);
+  const r=session.results, sum=a=>a.reduce((t,x)=>t+x.correct,0);
+  let rows="";
+  if(plan.includes("sb")){
+    const sb=r.filter(x=>x.task==="sb");
+    rows+=`<tr><th colspan="2">Part 1: Sentence Builder · ${esc(session.status.sb||"")}</th></tr>`;
+    rows+=SB_LEVELS.map((n,j)=>{const s=sb.filter(x=>x.level===j+1);return `<tr><td>Level ${j+1}. ${esc(n)}</td><td>${sum(s)} / ${s.length}</td></tr>`}).join("");
+    rows+=`<tr><td><strong>Sentence Builder total</strong></td><td><strong>${sum(sb)} / ${sb.length}</strong></td></tr>`;
+  }
+  if(plan.includes("pd")){
+    const pd=r.filter(x=>x.task==="pd");
+    rows+=`<tr><th colspan="2">Part 2: Pronoun Detective · ${esc(session.status.pd||"")}</th></tr>`;
+    rows+=PD_LEVELS.map((n,j)=>{const t=pd.filter(x=>x.level===j+1);return t.length?`<tr><td>${esc(n)}</td><td>${sum(t)} / ${t.length}</td></tr>`:""}).join("");
+    rows+=`<tr><td><strong>Pronoun Detective total</strong></td><td><strong>${sum(pd)} / ${pd.length}</strong></td></tr>`;
+  }
+  const fname=`SentenceSense_${(session.last+"_"+session.first).replace(/[^A-Za-z0-9]+/g,"_")}_${session.date}.csv`;
+  scr.innerHTML=`<section class="card">
+    <div class="big center" aria-hidden="true">★★★★★</div>
+    <h2 class="center">All done. Great job, ${first()}!</h2>
+    <div class="examiner" style="flex-direction:column;align-items:stretch">
+      <strong style="color:var(--ink)">Examiner summary</strong>
+      <span>${esc(session.name)} · DOB ${session.dob} · Age ${ageMonths(session.dob,session.date)} months · ${session.date}</span>
+      <div class="tablewrap"><table><tbody>${rows}</tbody></table></div>
+      ${kept
+        ?`<p class="feedback good">✓ Results saved on this iPad.</p>`
+        :`<p class="feedback try">✗ Results were NOT saved on this iPad (Private Browsing or storage is off). Tap Save this student now before moving on.</p>`}
+      <p class="feedback" id="saveMsg"></p>
+    </div></section>
+    <section class="card" style="margin-top:18px">
+      <h2>Examiner: what's next?</h2>
+      <div class="choicesNext">
+        <button class="btn primary bigchoice" id="newS">Next student<small>Test another student on this iPad</small></button>
+        ${kept?`<button class="btn bigchoice" id="eodBtn">End of the day →<small>Done testing? Save today's results</small></button>`
+              :`<button class="btn go bigchoice" id="save">Save this student<small>Storage is off, so save now</small></button>`}
+      </div>
+    </section>`;
+  on("save",()=>saveWithStatus(toCSV([session]),fname,"this student"));
+  on("eodBtn",showEndOfDay);
+  on("newS",setup);
+}
+function ageMonths(dob,date){const a=new Date(dob),b=new Date(date);if(isNaN(a)||isNaN(b))return"";let m=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());if(b.getDate()<a.getDate())m--;return m}
+
+/* ================= CSV ================= */
+function toCSV(sessions){
+  const head=["first_name","last_name","dob","age_months","test_date","start_time","ipad","task","task_status","item","level","level_name","prompt","target","response","response_order","correct","time_sec","taps","listens","task_total_correct","voice"];
+  const q=v=>{v=String(v??"");return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const out=[head.join(",")];
+  sessions.forEach(s=>{
+    const st=s.status||{}, tot=k=>s.results.filter(x=>(x.task||"sb")===k).reduce((a,x)=>a+x.correct,0);
+    s.results.forEach(x=>{const k=x.task||"sb";
+      out.push([...nameParts(s),s.dob,ageMonths(s.dob,s.date),s.date,s.start,s.device||"",TASKS[k].csvName,st[k]||s.ended||"",x.item,x.level,x.levelName,x.prompt||"",x.target,x.response,x.responseOrder,x.correct,x.timeSec,x.taps,x.listens??"",tot(k),s.voice||""].map(q).join(","))});
+  });
+  return "﻿"+out.join("\r\n");
+}
+/* On iPad/tablets: share sheet (OneDrive, Save to Files). Elsewhere: normal download. */
+async function download(text,name){
+  try{
+    const file=new File([text],name,{type:"text/csv"});
+    if(navigator.maxTouchPoints>1&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return"shared"}
+  }catch(e){if(e&&e.name==="AbortError")return"cancelled"}
+  try{
+    const blob=new Blob([text],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+    return"downloaded";
+  }catch(e){return"failed"}
+}
+/* ---------- Voice: use the most natural English voice installed on this device ----------
+   iPad "Premium" and "Enhanced" voices sound far more natural than the default.
+   Preference: Premium > Enhanced > known natural US voices > Google/Microsoft neural > any en-US. */
+const PREFERRED=["Ava","Samantha","Allison","Susan","Zoe","Nicky","Evan","Tom","Joelle","Noelle"];
+let VOICE=null;
+function scoreVoice(v){
+  if(!/^en[-_]?/i.test(v.lang))return -1;
+  let s=0;const n=v.name;
+  if(/premium/i.test(n))s+=100;
+  if(/enhanced/i.test(n))s+=80;
+  if(/natural|neural|online/i.test(n))s+=70;          // Edge / Windows neural voices
+  if(/google us english/i.test(n))s+=60;               // Chrome
+  const k=PREFERRED.findIndex(p=>n.startsWith(p));if(k>=0)s+=40-k;
+  if(/en[-_]US/i.test(v.lang))s+=10;
+  if(/compact|novelty|albert|bad news|bells|boing|bubbles|cellos|jester|organ|superstar|trinoids|whisper|wobble|zarvox|good news|bahh/i.test(n))s-=200;
+  return s;
+}
+function pickVoice(){
+  try{const vs=speechSynthesis.getVoices();if(!vs.length)return;
+    VOICE=vs.slice().sort((a,b)=>scoreVoice(b)-scoreVoice(a))[0]||null;
+    const el=document.getElementById("voiceName");if(el)el.textContent=voiceLabel();
+  }catch(e){}
+}
+function voiceLabel(){
+  if(!VOICE)return"Default voice";
+  const q=/premium/i.test(VOICE.name)?"natural":/enhanced/i.test(VOICE.name)?"good":"basic";
+  return `${VOICE.name} (${q})`;
+}
+try{pickVoice();speechSynthesis.addEventListener("voiceschanged",pickVoice)}catch(e){}
+function speak(t){try{const s=window.speechSynthesis;if(!s)return;s.cancel();const u=new SpeechSynthesisUtterance(t);
+  if(!VOICE)pickVoice();if(VOICE){u.voice=VOICE;u.lang=VOICE.lang}else u.lang="en-US";
+  u.rate=.9;u.pitch=1;s.speak(u)}catch(e){}}
+
+setup();
+</script>
+</body>
+</html>

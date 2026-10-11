@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentence Sense Practice</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;800&display=swap">
+<style>
+/* Practice game: same look as the test, plus right-answer feedback after every Check. */
+:root{
+  --bg:#F3F7FC; --surface:#FFFFFF; --ink:#16263D; --muted:#5A6B82; --line:#C9D7E8;
+  --navy:#1D4E89; --sea:#5EC4F0; --good:#2F8A4A; --goodbg:#E3F4E7; --warn:#B4541F; --warnbg:#FCEBDD;
+  --chip:#FFFFFF; --chipbd:#7D93B0; --gold:#B98309;
+  --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --read:"Andika","Comic Sans MS","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--read);font-size:18px;line-height:1.5}
+.wrap{max-width:820px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.eyebrow{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,5.5vw,40px);line-height:1.05;margin:0;color:var(--navy)}
+h2{font-family:var(--display);font-weight:800;font-size:26px;margin:0;color:var(--navy)}
+.card{background:var(--surface);border:2px solid var(--line);border-radius:22px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.count{font-family:var(--display);font-weight:600;color:var(--muted)}
+.stars{font-size:22px;color:var(--gold);letter-spacing:2px}
+.label{font-size:14px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin:0 0 6px}
+.lineArea{min-height:84px;border-bottom:4px solid var(--navy);padding:6px 2px 12px;display:flex;flex-wrap:wrap;align-content:flex-end;gap:10px}
+.lineArea.empty::before{content:"Tap the pieces to build your sentence here.";color:var(--muted);font-size:17px;align-self:center}
+.tray{min-height:70px;display:flex;flex-wrap:wrap;gap:10px;padding:12px;border-radius:16px;background:var(--bg);border:2px dashed var(--line)}
+.tray.empty::before{content:"All pieces used. Tap Check!";color:var(--muted);font-size:16px;align-self:center}
+.pieceWrap{display:inline-flex;align-items:stretch}
+.chunk,.choice{font-family:var(--read);font-weight:700;color:var(--ink);border:3px solid var(--chipbd);background:var(--chip);cursor:pointer;line-height:1.2}
+.chunk{font-size:clamp(19px,4.2vw,23px);min-height:52px;padding:8px 16px;border-radius:12px 0 0 12px;border-right-width:0}
+.choice{font-size:clamp(22px,4.6vw,28px);min-width:96px;min-height:60px;padding:8px 18px;border-radius:14px 0 0 14px;border-right-width:0}
+.choice[aria-pressed="true"]{border-color:var(--navy);background:var(--navy);color:#fff}
+.choice.right{border-color:var(--good);background:var(--good);color:#fff}
+.choice.wrongPick{border-color:var(--warn);background:var(--warnbg);color:var(--warn);text-decoration:line-through}
+.spk{font-size:18px;min-width:44px;padding:0 8px;border:3px solid var(--chipbd);border-left:2px dashed var(--line);background:var(--bg);border-radius:0 12px 12px 0;cursor:pointer}
+.spkBig{font-size:28px;min-width:64px;min-height:64px;border-radius:16px;border:3px solid var(--navy);flex:none}
+.choices{display:flex;flex-wrap:wrap;gap:14px}
+.qpic{margin:0;display:flex;justify-content:center}
+.qpic img{display:block;width:auto;height:auto;max-width:100%;max-height:min(40vh,360px);border-radius:16px;border:2px solid var(--line);background:var(--bg)}
+.qrow,.dirRow{display:flex;align-items:center;gap:12px}
+.sentenceQ{font-size:clamp(22px,4.6vw,30px);font-weight:700;line-height:1.6;margin:0}
+.sentenceQ .w{cursor:pointer;border-radius:6px}
+.sentenceQ .w:active{background:var(--sea)}
+.blank{display:inline-block;min-width:3.4em;text-align:center;border-bottom:4px solid var(--navy);padding:0 8px;color:var(--navy)}
+.blank.empty{color:transparent}
+.blank.right{color:var(--good);border-color:var(--good)}
+.dirLine{margin:0;font-size:19px;font-weight:700;color:var(--navy)}
+.feedback{font-size:19px;font-weight:700;border-radius:14px;padding:12px 16px;margin:0;display:flex;flex-direction:column;gap:6px}
+.feedback:empty{display:none}
+.feedback.good{background:var(--goodbg);color:var(--good)}
+.feedback.try{background:var(--warnbg);color:var(--warn)}
+.answerLine{color:var(--ink);font-size:clamp(20px,4.4vw,26px)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font-family:var(--display);font-weight:800;font-size:19px;min-height:52px;padding:6px 22px;border-radius:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.go{background:var(--good);border-color:var(--good);color:#fff}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.chunk:focus-visible,.choice:focus-visible,.spk:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.game{min-height:150px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;text-align:left;padding:18px 20px}
+.game b{font-size:26px}
+.game small{font-family:var(--read);font-weight:400;font-size:16px;color:var(--muted)}
+.big{font-size:44px;color:var(--gold);letter-spacing:4px;text-align:center}
+.center{text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><span class="eyebrow">Sentence Sense · Bear on the Loose</span><h1 id="title">Practice Time</h1></div>
+  </header>
+  <main id="screen"></main>
+</div>
+
+<script>
+/* ================= PRACTICE ITEMS (new sentences, same formats as the test) ================= */
+const SB_ITEMS=[
+  {lv:"Simple Sentences",pieces:["Officer Dee","sprinted."]},
+  {lv:"Simple Sentences",pieces:["Izzy","pedaled faster."]},
+  {lv:"Simple Sentences",pieces:["Izzy","took","pictures."]},
+  {lv:"Simple Sentences",pieces:["Hilde","wrote","notes."]},
+  {lv:"Simple Sentences",pieces:["The tiny cub","had","black fur."]},
+  {lv:"Simple Sentences",pieces:["The bear","knocked over","the trash cans."]},
+  {lv:"Where and When",pieces:["Officer Dee","sprinted","down Market Street."]},
+  {lv:"Where and When",pieces:["Hilde","stood","on the bike pegs."]},
+  {lv:"Where and When",pieces:["Hilde","stepped","into the forest."]},
+  {lv:"Where and When",pieces:["Izzy","took a picture","of the fur."]},
+  {lv:"Where and When",pieces:["The girls","rode home","before dinner."]},
+  {lv:"Where and When",pieces:["Trash","was","on the grass","behind Grove Grocer."]},
+  {lv:"Where and When",pieces:["Mr. Troutman","heard noises","behind the store","around six o\u2019clock."]},
+  {lv:"Where and When",pieces:["The cub","followed the berries","into the backyard","early in the morning."]},
+  {lv:"Telling More",pieces:["The bird feeder","that was twisted","had scratch marks."]},
+  {lv:"Telling More",pieces:["Mr. Troutman,","who owns Grove Grocer,","found black fur."]},
+  {lv:"Telling More",pieces:["The sound","that Izzy heard","came from the park."]},
+  {lv:"Telling More",pieces:["Officer Pam,","who has a golden badge,","came to Hilde\u2019s house."]},
+  {lv:"Telling More",pieces:["Hilde","found the bear cub","that followed the berry trail."]},
+  {lv:"Telling More",pieces:["Brian,","who is Sue\u2019s pet pig,","stayed inside."]}
+];
+const PD_ITEMS=[
+  {q:"Hilde followed the animal tracks, and ___ stepped into Selinsgrove Forest all by herself.",choices:["he","she","they","it"],answer:"she",img:"x01.jpg"},
+  {q:"Hilde and Izzy heard about the bear, but Officer Dee got there first because ___ sprinted down Market Street.",choices:["she","they","he","it"],answer:"he",img:"x02.jpg"},
+  {q:"Hilde\u2019s sleeve got stuck in the pricker bush, so Izzy said, \u201CHold still, and ___ will pull it out!\u201D",choices:["you","I","we","she"],answer:"I",img:"x03.jpg"},
+  {q:"\u201CIzzy and I need to see over the fence,\u201D said Hilde, \u201Cso ___ will have to work together.\u201D",choices:["they","you","we","us"],answer:"we",img:"x04.jpg"},
+  {q:"The bear cub jumped into Sue\u2019s pool, and ___ splashed water all over the yard.",choices:["it","they","she","we"],answer:"it",img:"x05.jpg"},
+  {q:"Donnie and Leon glared at Hilde and Izzy because ___ thought the girls got Maddy in trouble.",choices:["we","he","it","they"],answer:"they",img:"x06.jpg"},
+  {q:"Hilde and Izzy helped find the bear cub, so Officer Pam gave ___ two golden badges.",choices:["them","they","us","her"],answer:"them",img:"x07.jpg"},
+  {q:"\u201CHilde, look at the time on my phone,\u201D said Izzy. \u201CDad will be upset with ___ if we are late!\u201D",choices:["we","them","us","me"],answer:"us",img:"x08.jpg"},
+  {q:"Izzy looked out the window of the Fort and said, \u201CThis is ___ favorite place to watch for the bear!\u201D",choices:["your","her","his","my"],answer:"my",img:"x09.jpg"},
+  {q:"Officer Pam put the cub in a cage so she could take ___ back to the forest.",choices:["them","it","her","us"],answer:"it",img:"x10.jpg"},
+  {q:"Mr. Troutman found black fur on the bird feeder, so ___ held it up to show Hilde.",choices:["she","they","he","it"],answer:"he",img:"x11.jpg"},
+  {q:"Hilde and Izzy picked berries from the bush in the backyard because ___ wanted to make a trail for the bear.",choices:["they","we","she","it"],answer:"they",img:"x12.jpg"},
+  {q:"\u201COfficer Pam is on her way!\u201D said Hilde. \u201CIzzy and I did it! ___ found the bear cub!\u201D",choices:["They","You","We","Us"],answer:"We",img:"x13.jpg"},
+  {q:"The bear pulled on the metal pole so hard that ___ bent into the shape of an L.",choices:["he","they","she","it"],answer:"it",img:"x14.jpg"},
+  {q:"Mom set the enchiladas on the table and said, \u201CDig in, girls! ___ made them just for you.\u201D",choices:["I","She","We","You"],answer:"I",img:"x15.jpg"},
+  {q:"The mama bear came down the hill, and ___ gently nudged her cub with her nose.",choices:["it","she","he","they"],answer:"she",img:"x16.jpg"},
+  {q:"Mr. Troutman told Hilde, \u201CThe loud banging noise made ___ come outside to look!\u201D",choices:["him","them","us","me"],answer:"me",img:"x17.jpg"},
+  {q:"Izzy found paw prints in the sandbox, and she took a picture of ___ with her camera.",choices:["them","it","her","us"],answer:"them",img:"x18.jpg"},
+  {q:"Mom asked Hilde and Izzy, \u201CDo ___ want blueberry cobbler for dessert?\u201D",choices:["we","they","you","us"],answer:"you",img:"x19.jpg"},
+  {q:"Hilde whispered to Izzy, \u201CCan I borrow ___ flashlight? Mine is not working.\u201D",choices:["my","her","our","your"],answer:"your",img:"x20.jpg"}
+];
+/* Capital letter only when the blank starts a sentence or a quote; "I" always stays capital. */
+function fixCase(arr){arr.forEach(it=>{
+  const before=it.q.split("___")[0];
+  const atStart=/^\s*$|[.!?]\s*$|[\u201C"]\s*$/.test(before);
+  const f=w=>w==="I"?w:(atStart?w[0].toUpperCase()+w.slice(1):w.toLowerCase());
+  it.choices=it.choices.map(f);it.answer=f(it.answer);
+})}
+fixCase(PD_ITEMS);
+const GAMES={
+  sb:{title:"Sentence Builder",dir:"Put the pieces in order to make a sentence. Then tap Check.",
+      intro:"These pieces are parts of a sentence, but they are mixed up. Tap the pieces to put them in order. Start with who or what the sentence is about."},
+  pd:{title:"Pronoun Detective",dir:"Tap the word that fits in the blank. Then tap Check.",
+      intro:"Each sentence has a missing word. Read the whole sentence, find who or what it is about, and tap the word that fits in the blank."}
+};
+
+/* ================= STATE ================= */
+let game="sb", list=[], i=0, score=0, line=[], tray=[], pick=null, checked=false;
+const scr=document.getElementById("screen"), titleEl=document.getElementById("title");
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function on(id,f){const e=document.getElementById(id);if(e)e.onclick=f}
+function shuffle(n){let a;do{a=[...Array(n).keys()];for(let k=n-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}}while(n>1&&a.every((v,k)=>v===k));return a}
+
+/* ================= HOME ================= */
+function home(){
+  titleEl.textContent="Practice Time";
+  scr.innerHTML=`<section class="card">
+    <h2>Pick a game</h2>
+    <div class="games">
+      <button class="btn primary game" id="gSB"><b>Sentence Builder</b><small style="color:#DCE8F7">Put sentence pieces in the right order · ${SB_ITEMS.length} sentences</small></button>
+      <button class="btn go game" id="gPD"><b>Pronoun Detective</b><small style="color:#E3F4E7">Find the word that fits the blank · ${PD_ITEMS.length} questions</small></button>
+    </div>
+  </section>`;
+  on("gSB",()=>start("sb"));on("gPD",()=>start("pd"));
+}
+function start(g){
+  game=g;i=0;score=0;titleEl.textContent=GAMES[g].title;
+  list=g==="sb"?SB_ITEMS:PD_ITEMS;
+  if(g==="pd")list.forEach(it=>{const im=new Image();im.src=it.img});
+  scr.innerHTML=`<section class="card">
+    <h2>How to play</h2>
+    <div class="dirRow"><button class="spk spkBig" id="readIntro" aria-label="Hear the directions">🔊</button><p class="sentenceQ" style="font-size:20px;font-weight:400" id="introText">${GAMES[g].intro} After you tap Check, you will see the right answer.</p></div>
+    <div class="actions"><button class="btn go" id="go">Start</button><button class="btn" id="back">← Back</button></div>
+  </section>`;
+  on("readIntro",()=>speak($("#introText").textContent));on("go",load);on("back",home);
+}
+
+/* ================= ITEM ================= */
+function load(){const it=list[i];line=[];pick=null;checked=false;tray=game==="sb"?shuffle(it.pieces.length):[];render()}
+function render(fb){
+  const it=list[i], total=list.length;
+  const ready=game==="sb"?tray.length===0:pick!==null;
+  const body=game==="sb"
+   ?`<div><p class="label">My sentence</p><div class="lineArea ${line.length?"":"empty"}" id="lineArea"></div></div>
+     ${checked?"":`<div><p class="label">Pieces</p><div class="tray ${tray.length?"":"empty"}" id="tray"></div></div>`}`
+   :`<figure class="qpic"><img src="${it.img}" alt="" onerror="this.parentNode.hidden=true"></figure>
+     <div class="qrow"><button class="spk spkBig" id="readQ" aria-label="Read the sentence">🔊</button><p class="sentenceQ">${fillBlank(it)}</p></div>
+     <div class="choices">${it.choices.map((c,k)=>{
+        const cls=checked?(c===it.answer?"right":(k===pick?"wrongPick":"")):"";
+        return `<span class="pieceWrap"><button class="choice ${cls}" id="ch${k}" aria-pressed="${!checked&&pick===k}" ${checked?"disabled":""}>${esc(c)}</button><button class="spk" id="sp${k}" aria-label="Hear ${esc(c)}">🔊</button></span>`}).join("")}</div>`;
+  scr.innerHTML=`<section class="card">
+    <div class="meta"><span class="count">${game==="sb"?"Sentence":"Question"} ${i+1} of ${total}${game==="sb"?` · ${esc(it.lv)}`:""}</span><span class="stars" aria-label="${score} correct">${"★".repeat(score)}</span></div>
+    <div class="dirRow"><button class="spk spkBig" id="readDir" aria-label="Hear the directions">🔊</button><p class="dirLine">${GAMES[game].dir}</p></div>
+    ${body}
+    <div class="feedback ${fb?fb.cls:""}" id="fb">${fb?fb.html:""}</div>
+    <div class="actions">
+      ${checked
+        ?`<button class="btn go" id="next">${i<total-1?"Next →":"See my score"}</button><button class="btn" id="hearAns">🔊 Hear the right answer</button>`
+        :`<button class="btn primary" id="check" ${ready?"":"disabled"}>Check</button>
+          ${game==="sb"?`<button class="btn" id="clear" ${line.length?"":"disabled"}>Start over</button><button class="btn" id="hearMine" ${line.length?"":"disabled"}>🔊 Hear my sentence</button>`:""}`}
+    </div>
+  </section>`;
+  if(game==="sb"){
+    const L=$("#lineArea"),T=$("#tray");
+    line.forEach((k,pos)=>L.appendChild(chip(it.pieces[k],()=>{if(checked)return;line.splice(pos,1);tray.push(k);render()})));
+    if(T)tray.forEach((k,pos)=>T.appendChild(chip(it.pieces[k],()=>{tray.splice(pos,1);line.push(k);render()})));
+    on("clear",()=>{tray=tray.concat(line);line=[];render()});
+    on("hearMine",()=>speak(line.map(k=>it.pieces[k]).join(" ")));
+  }else{
+    it.choices.forEach((c,k)=>{on("ch"+k,()=>{pick=k;render()});on("sp"+k,()=>speak(c))});
+    on("readQ",()=>speak(it.q.replace("___","blank")));
+    scr.querySelectorAll(".w").forEach(w=>w.onclick=()=>speak(w.dataset.say));
+  }
+  on("readDir",()=>speak(GAMES[game].dir));
+  on("check",check);
+  on("next",()=>{if(i<list.length-1){i++;load()}else done()});
+  on("hearAns",()=>speak(rightSentence(it)));
+}
+function chip(text,fn){
+  const w=document.createElement("span");w.className="pieceWrap";
+  const b=document.createElement("button");b.className="chunk";b.textContent=text;b.onclick=fn;
+  const s=document.createElement("button");s.className="spk";s.setAttribute("aria-label","Hear "+text);s.textContent="🔊";s.onclick=()=>speak(text);
+  w.append(b,s);return w;
+}
+function wordsHTML(t){return t.split(/(\s+)/).map(x=>{if(!x.trim())return x;const c=x.replace(/[^A-Za-z'’]/g,"");return c?`<span class="w" data-say="${esc(c)}">${esc(x)}</span>`:esc(x)}).join("")}
+function fillBlank(it){
+  const [a,b]=it.q.split("___");
+  const word=checked?it.answer:(pick===null?"":it.choices[pick]);
+  const cls=checked?"right":(pick===null?"empty":"");
+  return wordsHTML(a)+`<span class="blank w ${cls}" data-say="${word?esc(word):"blank"}">${word?esc(word):"____"}</span>`+wordsHTML(b||"");
+}
+function rightSentence(it){return game==="sb"?it.pieces.join(" "):it.q.replace("___",it.answer)}
+
+/* ================= CHECK: always show the right answer ================= */
+function check(){
+  const it=list[i];
+  const ok=game==="sb"?line.every((k,pos)=>k===pos):it.choices[pick]===it.answer;
+  if(ok)score++;
+  checked=true;
+  if(game==="sb")line=it.pieces.map((_,k)=>k);   // show the pieces in the right order
+  const right=esc(rightSentence(it));
+  const fb=ok
+    ?{cls:"good",html:`<span>✓ You got it!</span><span class="answerLine">${right}</span>`}
+    :{cls:"try",html:`<span>Not quite. Here is the right answer:</span><span class="answerLine">${right}</span>${game==="pd"?`<span style="font-size:17px">The answer is <b>${esc(it.answer)}</b>. ${esc(hintFor(it))}</span>`:`<span style="font-size:17px">${esc(sbTip(it))}</span>`}`};
+  render(fb);
+  speak((ok?"You got it! ":"Here is the right answer. ")+rightSentence(it));
+}
+/* short teaching tip shown after a wrong answer */
+function hintFor(it){
+  const a=it.answer.toLowerCase();
+  const tips={they:"They means more than one person or thing.",we:"We means me and someone else.",it:"It means one thing or animal.",i:"I is the person talking.",
+    she:"She means one girl or woman.",he:"He means one boy or man.",me:"Me is the person talking.",your:"Your means it belongs to the person you are talking to.",
+    them:"Them means more than one person or thing.",my:"My means it belongs to the person talking.",us:"Us means me and someone else."};
+  return tips[a]||"";
+}
+function sbTip(it){
+  if(it.lv==="Telling More")return "The telling-more part (who, which, that) goes right after the noun it tells about.";
+  if(it.lv==="Where and When")return "Start with who or what. The where and when parts come after the action.";
+  return "Start with who or what the sentence is about, then what they did.";
+}
+
+/* ================= DONE ================= */
+function done(){
+  const n=list.length;
+  scr.innerHTML=`<section class="card center">
+    <div class="big" aria-hidden="true">${"★".repeat(Math.max(1,Math.round(score/n*5)))}</div>
+    <h2>Great practicing!</h2>
+    <p class="sentenceQ" style="font-size:24px">You got ${score} out of ${n} right.</p>
+    <div class="actions" style="justify-content:center"><button class="btn go" id="again">Play again</button><button class="btn" id="other">Try the other game</button></div>
+  </section>`;
+  speak(`Great practicing! You got ${score} out of ${n} right.`);
+  on("again",()=>start(game));on("other",()=>start(game==="sb"?"pd":"sb"));
+}
+
+/* ================= VOICE (same as the test: most natural voice on the device) ================= */
+const PREFERRED=["Ava","Samantha","Allison","Susan","Zoe","Nicky","Evan","Tom"];
+let VOICE=null;
+function scoreVoice(v){if(!/^en[-_]?/i.test(v.lang))return -1;let s=0;const n=v.name;
+  if(/premium/i.test(n))s+=100;if(/enhanced/i.test(n))s+=80;if(/natural|neural|online/i.test(n))s+=70;if(/google us english/i.test(n))s+=60;
+  const k=PREFERRED.findIndex(p=>n.startsWith(p));if(k>=0)s+=40-k;if(/en[-_]US/i.test(v.lang))s+=10;
+  if(/compact|novelty|albert|bad news|bells|boing|bubbles|cellos|jester|organ|superstar|trinoids|whisper|wobble|zarvox|good news|bahh/i.test(n))s-=200;return s}
+function pickVoice(){try{const vs=speechSynthesis.getVoices();if(vs.length)VOICE=vs.slice().sort((a,b)=>scoreVoice(b)-scoreVoice(a))[0]}catch(e){}}
+try{pickVoice();speechSynthesis.addEventListener("voiceschanged",pickVoice)}catch(e){}
+function speak(t){try{const s=window.speechSynthesis;if(!s)return;s.cancel();const u=new SpeechSynthesisUtterance(t);
+  if(!VOICE)pickVoice();if(VOICE){u.voice=VOICE;u.lang=VOICE.lang}else u.lang="en-US";u.rate=.9;s.speak(u)}catch(e){}}
+
+home();
+</script>
+</body>
+</html>
